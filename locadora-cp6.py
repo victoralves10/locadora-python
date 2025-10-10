@@ -106,7 +106,9 @@ def pesquisar_veiculo(_conexao: oracledb.Connection):
     inst_consulta = _conexao.cursor()
     lista_dados = []
 
-
+    previa_pesquisa(_conexao)
+    
+    print()
     id_veiculo = solicita_inteiro("Digite o id do veículo: ")
     print()
 
@@ -132,7 +134,56 @@ def pesquisar_veiculo(_conexao: oracledb.Connection):
     else:
         print(dados_df)
 
+def listar_veiculos(_conexao):
+    inst_consulta = _conexao.cursor()
+    lista_dados = []
 
+    comando_sql = f"""SELECT * FROM T_VEICULOS"""
+
+    inst_consulta.execute(comando_sql)
+    data = inst_consulta.fetchall()
+
+    for dt in data:
+        lista_dados.append(dt)
+    
+    lista_dados = sorted(lista_dados)
+
+    dados_df = pd.DataFrame.from_records(
+        lista_dados,
+        columns=['ID', 'Modelo', 'Marca', 'Ano', 'Diaria', 'Aquisição'],
+        index='ID'
+    )
+
+
+    if dados_df.empty:
+        print(f"Não há um veículos cadastrados!")
+    else:
+        print(dados_df)
+
+def previa_pesquisa(_conexao):
+    inst_consulta = _conexao.cursor()
+    lista_dados = []
+
+    comando_sql = f"""SELECT id_veiculo, modelo FROM T_VEICULOS"""
+
+    inst_consulta.execute(comando_sql)
+    data = inst_consulta.fetchall()
+
+    for dt in data:
+        lista_dados.append(dt)
+    
+    lista_dados = sorted(lista_dados)
+
+    dados_df = pd.DataFrame.from_records(
+        lista_dados,
+        columns=['ID', 'Modelo'],
+        index='ID'
+    )
+
+    if dados_df.empty:
+        print(f"Não há um veículos cadastrados!")
+    else:
+        print(dados_df)
 #------------------------------------------
 
 user = "rm561833"
@@ -173,4 +224,7 @@ while conectado:
             pesquisar_veiculo(conn)
             input("\nPrecione ENTER para voltar. ")
         case 3:
-            ...
+            limpa_tela()
+            titulo_centralizado("LISTA TODOS OS VEÍCULOS",50)
+            listar_veiculos(conn)
+            input("\nPrecione ENTER para voltar. ")
