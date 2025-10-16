@@ -15,7 +15,7 @@ CREATE TABLE T_VEICULOS (
 );
 """
 
-def limpa_tela() -> None:
+def limpa_tela():
     os.system("cls" if os.name == "nt" else "clear")
 
 def titulo_centralizado(_texto: str, _qtd_caracteres: int):
@@ -43,7 +43,7 @@ def solicita_inteiro(_mensagem: str) -> int:
 
     return int(inteiro_str)
 
-def solicita_data(_mensagem: str) -> datetime:
+def solicita_data(_mensagem: str):
     data_str = ""
     while not data_str:
         data_str = str(input(_mensagem)).strip()
@@ -70,7 +70,6 @@ def solicita_float(_mensagem: str) -> float:
     return float(float_str)
 
 def conexao_oracledb(_user: str, _password: str, _dsn: str) -> oracledb.Connection:
-    # Conexão com banco de dados Oracle.
     try:
         conexao = oracledb.connect(
             user = _user,
@@ -84,26 +83,29 @@ def conexao_oracledb(_user: str, _password: str, _dsn: str) -> oracledb.Connecti
 
 def cadastrar_veiculo(_conexao: oracledb.Connection):
 
+    cur = _conexao.cursor()
+
     modelo = solicita_texto("Digite o modelo do veículo: ")
     marca = solicita_texto("Digite a marca do veículo: ")
     ano_fabricacao = solicita_inteiro("Digite o ano do veículo: ")
     valor_diaria = solicita_inteiro("Digite o valor da diária do veículo: ")
     data_aquisicao = solicita_data("Digite a data de aquisição do veículo (DD/MM/YYYY): ")
 
+    sql = """INSERT INTO T_VEICULOS (modelo, marca, ano_fabricacao, valor_diaria, data_aquisicao)
+    VALUES (:modelo, :marca, :ano_fabricacao, :valor_diaria, :data_aquisicao)"""
 
-    comando_sql = f"""
-INSERT INTO T_VEICULOS 
-(modelo, marca, ano_fabricacao, valor_diaria, data_aquisicao)
-VALUES 
-('{modelo}', '{marca}', {ano_fabricacao}, {valor_diaria}, TO_DATE('{data_aquisicao}', 'DD/MM/YYYY'))
-"""
+    cur.execute(sql, {
+        "modelo": modelo,
+        "marca": marca,
+        "ano_fabricacao": ano_fabricacao,
+        "valor_diaria": valor_diaria,
+        "data_aquisicao": data_aquisicao
+    })
 
-    inst_cadastro = _conexao.cursor()
-    inst_cadastro.execute(comando_sql)
     _conexao.commit() 
 
 def pesquisar_veiculo(_conexao: oracledb.Connection):
-    inst_consulta = _conexao.cursor()
+    cur = _conexao.cursor()
     lista_dados = []
 
     previa_pesquisa(_conexao)
@@ -112,10 +114,10 @@ def pesquisar_veiculo(_conexao: oracledb.Connection):
     id_veiculo = solicita_inteiro("Digite o id do veículo: ")
     print()
 
-    comando_sql = f"""SELECT * FROM T_VEICULOS WHERE id_veiculo = {id_veiculo}"""
+    sql = f"""SELECT * FROM T_VEICULOS WHERE id_veiculo = :id_veiculo"""
 
-    inst_consulta.execute(comando_sql)
-    data = inst_consulta.fetchall()
+    cur.execute(sql, {"id_veiculo": id_veiculo})
+    data = cur.fetchall()
 
     for dt in data:
         lista_dados.append(dt)
@@ -154,20 +156,19 @@ def listar_veiculos(_conexao):
         index='ID'
     )
 
-
     if dados_df.empty:
         print(f"Não há um veículos cadastrados!")
     else:
         print(dados_df)
 
 def previa_pesquisa(_conexao):
-    inst_consulta = _conexao.cursor()
+    cur = _conexao.cursor()
     lista_dados = []
 
-    comando_sql = f"""SELECT id_veiculo, modelo FROM T_VEICULOS"""
+    sql = f"""SELECT id_veiculo, modelo FROM T_VEICULOS"""
 
-    inst_consulta.execute(comando_sql)
-    data = inst_consulta.fetchall()
+    cur.execute(sql)
+    data = cur.fetchall()
 
     for dt in data:
         lista_dados.append(dt)
@@ -187,7 +188,8 @@ def previa_pesquisa(_conexao):
 
 def alterar_dados(_conexao: oracledb.Connection):
     try:
-        inst_consulta = _conexao.cursor()
+        cur = _conexao.cursor()
+
         lista_dados = []
 
         previa_pesquisa(_conexao)
@@ -196,10 +198,10 @@ def alterar_dados(_conexao: oracledb.Connection):
         id_veiculo = solicita_inteiro("Digite o id do veículo: ")
         print()
 
-        comando_sql = f"""SELECT * FROM T_VEICULOS WHERE id_veiculo = {id_veiculo}"""
+        comando_sql = f"""SELECT * FROM T_VEICULOS WHERE id_veiculo = :id_veiculo"""
 
-        inst_consulta.execute(comando_sql)
-        data = inst_consulta.fetchall()
+        cur.execute(comando_sql, {"id_veiculo": id_veiculo})
+        data = cur.fetchall()
 
         for dt in data:
             lista_dados.append(dt)
@@ -217,16 +219,22 @@ def alterar_dados(_conexao: oracledb.Connection):
             novo_data_aquisicao = solicita_data("Digite a data de aquisição do veículo (DD/MM/YYYY): ")
         
         alteracao = f"""UPDATE T_VEICULOS 
-                SET modelo='{novo_modelo}', 
-                    marca='{novo_marca}', 
-                    ano_fabricacao={novo_ano_fabricacao}, 
-                    valor_diaria={novo_valor_diaria}, 
-                    data_aquisicao=TO_DATE('{novo_data_aquisicao}', 'DD/MM/YYYY') 
-                WHERE id_veiculo={id_veiculo}"""
+                SET modelo = :modelo, 
+                    marca = :marca, 
+                    ano_fabricacao = :ano_fabricacao, 
+                    valor_diaria = :valor_diaria, 
+                    data_aquisicao = TO_DATE( :data_aquisicao, 'DD/MM/YYYY') 
+                WHERE id_veiculo= :id_veiculo"""
 
+        cur.execute(alteracao, {
+            "modelo": novo_modelo,
+            "marca": novo_marca,
+            "ano_fabricacao": novo_ano_fabricacao,
+            "valor_diaria": novo_valor_diaria,
+            "data_aquisicao": novo_data_aquisicao,
+            "id_veiculo": id_veiculo
+        })
 
-        inst_alteracao = _conexao.cursor()
-        inst_alteracao.execute(alteracao)
         _conexao.commit()
         print("\nRegistro ALTERADO!")
     except:
@@ -234,9 +242,10 @@ def alterar_dados(_conexao: oracledb.Connection):
 
 def excluir_registros(_conexao: oracledb.Connection):
     try:
+        cur = _conexao.cursor()
+
         lista_dados = []
 
-        inst_consulta = _conexao.cursor()
 
         previa_pesquisa(_conexao)
 
@@ -244,10 +253,10 @@ def excluir_registros(_conexao: oracledb.Connection):
         id_veiculo = solicita_inteiro("Digite o id do veículo: ")
         print()
 
-        comando_sql = f"""SELECT * FROM T_VEICULOS WHERE id_veiculo = {id_veiculo} """
+        comando_sql = f"""SELECT * FROM T_VEICULOS WHERE id_veiculo = :id_veiculo"""
 
-        inst_consulta.execute(comando_sql)
-        data = inst_consulta.fetchall()
+        cur.execute(comando_sql, {"id_veiculo": id_veiculo})
+        data = cur.fetchall()
 
         for dt in data:
             lista_dados.append(dt)
@@ -255,17 +264,15 @@ def excluir_registros(_conexao: oracledb.Connection):
         if len(lista_dados) == 0:
             print(f"Não há um veículo cadastrado com ID = {id_veiculo}")
         else:
-            comando_sql_delete = f"""DELETE FROM t_veiculos WHERE id_veiculo={id_veiculo}"""
+            comando_sql_delete = f"""DELETE FROM t_veiculos WHERE id_veiculo= :id_veiculo"""
 
-            inst_exclusao = _conexao.cursor()
-            inst_exclusao.execute(comando_sql_delete)
+            cur.execute(comando_sql_delete, {"id_veiculo": id_veiculo})
             _conexao.commit()
             print("Registro APAGADO!")
     except: 
         print("\nErro na transação do BD")
 
-
-#------------------------------------------
+#-------------- MENU --------------
 
 user = "rm561833"
 password = "070406"
@@ -297,11 +304,11 @@ while conectado:
             try:
                 cadastrar_veiculo(conn)
             except oracledb.Error as e:
-                print("Não foi possível completar a operação no banco de dados.")
-                print(f"Detalhas do erro: {e}\n")
-                input("Precione ENTER para voltar. ")
+                print("\nNão foi possível completar a operação no banco de dados.")
+                print(f"\nDetalhas do erro: {e}")
+                input("\nPrecione ENTER para voltar. ")
             else:
-                print("Cadastro feito com sucesso.\n")
+                print("\nCadastro feito com sucesso.\n")
                 input("Precione ENTER para voltar. ")
         case 2:
             limpa_tela()
@@ -322,4 +329,9 @@ while conectado:
             limpa_tela()
             titulo_centralizado("EXCLUIR REGISTROS",50)
             excluir_registros(conn)
+            input("\nPrecione ENTER para voltar. ")
+        case 6:
+            limpa_tela()
+            titulo_centralizado("EXCLUIR TODOS OS DADOS",50)
+            print("Em manutenção...")
             input("\nPrecione ENTER para voltar. ")
