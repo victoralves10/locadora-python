@@ -184,6 +184,87 @@ def previa_pesquisa(_conexao):
         print(f"Não há um veículos cadastrados!")
     else:
         print(dados_df)
+
+def alterar_dados(_conexao: oracledb.Connection):
+    try:
+        inst_consulta = _conexao.cursor()
+        lista_dados = []
+
+        previa_pesquisa(_conexao)
+
+        print()
+        id_veiculo = solicita_inteiro("Digite o id do veículo: ")
+        print()
+
+        comando_sql = f"""SELECT * FROM T_VEICULOS WHERE id_veiculo = {id_veiculo}"""
+
+        inst_consulta.execute(comando_sql)
+        data = inst_consulta.fetchall()
+
+        for dt in data:
+            lista_dados.append(dt)
+
+        lista_dados = sorted(lista_dados)
+
+        if len(lista_dados) == 0:
+            print(f"Não há vaículo cadastrado com o ID = {id_veiculo}")
+            input("Pressione ENTER")
+        else:
+            novo_modelo = solicita_texto("Digite o modelo do veículo: ")
+            novo_marca = solicita_texto("Digite a marca do veículo: ")
+            novo_ano_fabricacao = solicita_inteiro("Digite o ano do veículo: ")
+            novo_valor_diaria = solicita_inteiro("Digite o valor da diária do veículo: ")
+            novo_data_aquisicao = solicita_data("Digite a data de aquisição do veículo (DD/MM/YYYY): ")
+        
+        alteracao = f"""UPDATE T_VEICULOS 
+                SET modelo='{novo_modelo}', 
+                    marca='{novo_marca}', 
+                    ano_fabricacao={novo_ano_fabricacao}, 
+                    valor_diaria={novo_valor_diaria}, 
+                    data_aquisicao=TO_DATE('{novo_data_aquisicao}', 'DD/MM/YYYY') 
+                WHERE id_veiculo={id_veiculo}"""
+
+
+        inst_alteracao = _conexao.cursor()
+        inst_alteracao.execute(alteracao)
+        _conexao.commit()
+        print("\nRegistro ALTERADO!")
+    except:
+        print("\nErro na transação do BD")
+
+def excluir_registros(_conexao: oracledb.Connection):
+    try:
+        lista_dados = []
+
+        inst_consulta = _conexao.cursor()
+
+        previa_pesquisa(_conexao)
+
+        print()
+        id_veiculo = solicita_inteiro("Digite o id do veículo: ")
+        print()
+
+        comando_sql = f"""SELECT * FROM T_VEICULOS WHERE id_veiculo = {id_veiculo} """
+
+        inst_consulta.execute(comando_sql)
+        data = inst_consulta.fetchall()
+
+        for dt in data:
+            lista_dados.append(dt)
+        
+        if len(lista_dados) == 0:
+            print(f"Não há um veículo cadastrado com ID = {id_veiculo}")
+        else:
+            comando_sql_delete = f"""DELETE FROM t_veiculos WHERE id_veiculo={id_veiculo}"""
+
+            inst_exclusao = _conexao.cursor()
+            inst_exclusao.execute(comando_sql_delete)
+            _conexao.commit()
+            print("Registro APAGADO!")
+    except: 
+        print("\nErro na transação do BD")
+
+
 #------------------------------------------
 
 user = "rm561833"
@@ -196,10 +277,14 @@ conectado = bool(conn)
 while conectado:
     limpa_tela()
     titulo_centralizado("LOCADORA",50)
-    print("""0 - Sair 
-1 - Cadastrar Veículo 
+    print("""1 - Cadastrar Veículo 
 2 - Pesquisar Veículo
 3 - Listar Todos os Veículos
+4 - Alterar Dados
+5 - Excluir um Registro
+6 - Excluir Todos os Dados 
+          
+0 - Sair 
 """)
     escolha = solicita_inteiro("Escolha: ")
 
@@ -227,4 +312,14 @@ while conectado:
             limpa_tela()
             titulo_centralizado("LISTA TODOS OS VEÍCULOS",50)
             listar_veiculos(conn)
+            input("\nPrecione ENTER para voltar. ")
+        case 4:
+            limpa_tela()
+            titulo_centralizado("ALTERAR DADOS",50)
+            alterar_dados(conn)
+            input("\nPrecione ENTER para voltar. ")
+        case 5:
+            limpa_tela()
+            titulo_centralizado("EXCLUIR REGISTROS",50)
+            excluir_registros(conn)
             input("\nPrecione ENTER para voltar. ")
