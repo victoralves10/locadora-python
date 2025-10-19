@@ -1,15 +1,17 @@
 # Victor Alves Lopes RM561833
 
-# Orientação para que o código funcione:
-    # 1. Copie o comando SQL e execute no seu banco de dados.
-    # 2. Faça o download das bibliotecas necessárias para que o código funcione no seu terminal.
-        # pip install oracledb
-        # pip install pandas
-
 import os
 import oracledb
 import pandas as pd
 from datetime import datetime
+from tabulate import tabulate
+
+# ORIENTAÇÕES PARA QUE O CÓDIGO FUNCIONE:
+    # 1. Copie o comando SQL e execute no seu banco de dados.
+    # 2. Faça o download das bibliotecas necessárias para que o código funcione no seu terminal:
+        # pip install oracledb
+        # pip install pandas
+        # pip install tabulate
 
 # COMANDO SQL PARA ORACLE:
 """
@@ -198,6 +200,7 @@ Escolha: """
 
     return dados
 
+# Insere um novo registro de veículo e retorna True se o cadastro for bem sucedido ou False em caso de erro.
 def cadastrar_veiculo(_conexao: oracledb.Connection, _dados: dict) -> bool:
     try: 
         comando_sql = """
@@ -224,6 +227,122 @@ VALUES (
     
     return sucesso
 
+# Busca e exibe uma lista resumida de veículos cadastrados no banco de dados.
+def previa_dados_veiculo(_conexao: oracledb.Connection) -> str:
+    cur = _conexao.cursor()
+    cur.execute("""SELECT id_veiculo, modelo, placa, status FROM T_VEICULOS""")
+    dados = cur.fetchall()
+    cur.close()
+
+
+    if not dados:
+        print("Nenhum veículo encontrado.")
+        return None
+    
+    dados = sorted(dados, key=lambda x: x[0])
+
+    # Cabeçalhos das colunas
+    colunas = ["ID", "Modelo", "Placa", "Status"]
+
+    # Exibição formatada com tabulate
+    tabela = tabulate(
+    dados,
+    headers=colunas,
+    tablefmt="fancy_grid", # plain, grid, fancy_grid, github, psql, pipe, simple_outline
+    numalign="right", # left, center, right
+    stralign="right" # left, center, right
+    )
+    return tabela
+
+# Retorna os dados completos de um veículo específico pelo ID formatados em tabela.
+def dados_unicos(_conexao: oracledb.Connection, _id: int) -> str:
+    cur = _conexao.cursor()
+    comando_sql = """SELECT * FROM T_VEICULOS WHERE id_veiculo = :id_veiculo"""
+    cur.execute(comando_sql, {"id_veiculo": _id})
+    dados = cur.fetchall()
+    cur.close()
+
+    tabela = None
+
+    if not dados:
+        print("Nenhum veículo encontrado.")
+        return tabela
+
+    colunas = [
+        "ID", "Tipo", "Marca", "Modelo", "Ano Fab.", "Placa", "Cor",
+        "Combustível", "Km", "Status", "Valor Diária", "Data Aquisição"
+    ]
+
+    tabela = tabulate(
+    dados,
+    headers=colunas,
+    tablefmt="fancy_grid", # plain, grid, fancy_grid, github, psql, pipe, simple_outline
+    numalign="right", # left, center, right
+    stralign="right" # left, center, right
+    )
+    return tabela
+
+# Retorna todos os registros de veículos formatados em tabela.
+def dados_inteiros(_conexao: oracledb.Connection, ) -> str:
+    cur = _conexao.cursor()
+    cur.execute("SELECT * FROM T_VEICULOS")
+    dados = cur.fetchall()
+    cur.close()
+
+    tabela = None
+
+    if not dados:
+        print("Nenhum veículo encontrado.")
+        return tabela
+
+    colunas = [
+        "ID", "Tipo", "Marca", "Modelo", "Ano Fab.", "Placa", "Cor",
+        "Combustível", "Km", "Status", "Valor Diária", "Data Aquisição"
+    ]
+
+    tabela = tabulate(
+    dados,
+    headers=colunas,
+    tablefmt="fancy_grid", # plain, grid, fancy_grid, github, psql, pipe, simple_outline
+    numalign="right", # left, center, right
+    stralign="right" # left, center, right
+    )
+    return tabela
+
+# 
+def alterar_dados(_conexao: oracledb.Connection, _dados: dict, _id_veiculo: int) -> bool:
+    try: 
+        comando_sql = """
+        UPDATE T_VEICULOS
+        SET tipo = :tipo,
+            marca = :marca,
+            modelo = :modelo,
+            ano_fabricacao = :ano_fabricacao,
+            placa = :placa,
+            cor = :cor,
+            combustivel = :combustivel,
+            quilometragem = :quilometragem,
+            status = :status,
+            valor_diaria = :valor_diaria,
+            data_aquisicao = TO_DATE(:data_aquisicao, 'DD/MM/YYYY')
+        WHERE id_veiculo = :id_veiculo
+        """
+
+        dados_bind = _dados.copy()
+        dados_bind["id_veiculo"] = _id_veiculo
+
+        cur = _conexao.cursor()
+        cur.execute(comando_sql, dados_bind)
+        _conexao.commit()
+        cur.close()
+
+        sucesso = True
+
+    except Exception as e:
+        print(f"\nErro no cadastro.\n\n{e}")
+        sucesso = False
+    
+    return sucesso
 
 # -------------------- PROGRAMA PRINCIPAL
 try:
@@ -255,6 +374,10 @@ while conectado:
     escolha = solicita_inteiro_intervalo("Escolha: ", 0, 9)
     
     match escolha:
+        case 0:
+            limpa_tela()
+            print("\nPrograma encerrado. Até logo!\n")
+            conectado = False
         case 1:
             limpa_tela()
             titulo_centralizado("FICHA DE CADASTRO DE VEÍCULO LOCADORA", 60)
@@ -266,18 +389,100 @@ while conectado:
             else:
                 input("\nPrecione ENTER para continuar...")
         case 2:
-            ...
+            id_veiculo = -1  # inicializa com valor diferente de 0
+
+            while id_veiculo != 0:
+                limpa_tela()
+                titulo_centralizado("CONSULTA DE VEÍCULO LOCADORA", 60)
+
+                print("\nESCOLHA O ID DO VEÍCULO QUE DESEJA CONSULTAR:\n")
+
+                previa_dados = previa_dados_veiculo(conn)
+
+                if previa_dados:
+                    print(previa_dados)
+                print("\nDIGITE '0' PARA VOLTAR AO MENU PRINCIPAL\n")
+                id_veiculo = solicita_inteiro("\nDigite o ID do veículo: ")
+                
+                if id_veiculo == 0:
+                    continue
+                
+                todos_dados = dados_unicos(conn, id_veiculo)
+
+                limpa_tela()
+                titulo_centralizado("CONSULTA DE VEÍCULO LOCADORA", 60)
+
+                if todos_dados:
+                    print(todos_dados)
+                else:
+                    print("\nNenhum veículo encontrado com esse ID.\n")
+                
+                input("\nPrecione ENTER para continuar...")
+
         case 3:
-            ...
+            limpa_tela()
+            titulo_centralizado("LISTA DE TODOS OS VEÍCULOS", 60)
+            dados = dados_inteiros(conn)
+            print(dados)
+            input("\nPrecione ENTER para continuar...")
         case 4:
-            ...
+            id_veiculo = -1  # inicializa com valor diferente de 0
+
+            while id_veiculo != 0:
+                limpa_tela()
+                titulo_centralizado("ATUALIZAR VEÍCULO LOCADORA", 60)
+
+                print("\nESCOLHA O ID DO VEÍCULO QUE DESEJA CONSULTAR:\n")
+
+                previa_dados = previa_dados_veiculo(conn)
+
+                if previa_dados:
+                    print(previa_dados)
+                print("\nDIGITE '0' PARA VOLTAR AO MENU PRINCIPAL\n")
+                id_veiculo = solicita_inteiro("\nDigite o ID do veículo: ")
+                
+                if id_veiculo == 0:
+                    continue
+                
+                todos_dados = dados_unicos(conn, id_veiculo)
+
+                limpa_tela()
+                titulo_centralizado("ATUALIZAÇÃO DE VEÍCULO LOCADORA", 60)
+
+                if todos_dados:
+                    print("DADOS ATUAIS")
+                    print(todos_dados)
+                    print("\nDigite os novos dados do veículo:\n")
+                    
+                    # ✅ Aqui coleta os novos dados e passa o dicionário correto para a função
+                    novos_dados = solicita_dados_veiculos()
+                    alterar_dados(conn, novos_dados, id_veiculo)
+
+                else:
+                    print("\nNenhum veículo encontrado com esse ID.\n")
+                
+                input("\nPressione ENTER para continuar...")
+
+
+
+
         case 5:
-            ...
+            limpa_tela()
+            print("\nEm manutenção\n")
+            input("\nPrecione ENTER para continuar...")
         case 6:
-            ...
+            limpa_tela()
+            print("\nEm manutenção\n")
+            input("\nPrecione ENTER para continuar...")
         case 7:
-            ...
+            limpa_tela()
+            print("\nEm manutenção\n")
+            input("\nPrecione ENTER para continuar...")
         case 8:
-            ...
+            limpa_tela()
+            print("\nEm manutenção\n")
+            input("\nPrecione ENTER para continuar...")
         case 9:
-            ...
+            limpa_tela()
+            print("\nEm manutenção\n")
+            input("\nPrecione ENTER para continuar...")
