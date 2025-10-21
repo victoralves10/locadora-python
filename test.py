@@ -267,42 +267,71 @@ def buscar_detalhes_veiculo_por_id(_conexao: oracledb.Connection, _id_veiculo: i
     )
     return tabela_detalhada
 
-# pega todos os veículos do banco com todos os detalhes e mostra em tabela completa.
-def buscar_todos_veiculos_detalhados(_conexao: oracledb.Connection) -> str:
+# busca todos os veículos do banco e retorna uma lista de dicionários
+def buscar_todos_veiculos_como_dicionario(_conexao: oracledb.Connection) -> list:
     cur = _conexao.cursor()
-    cur.execute("SELECT * FROM T_VEICULOS")
-    todos_os_dados = cur.fetchall()
+    cur.execute("""
+        SELECT id_veiculo, tipo, marca, modelo, ano_fabricacao, placa, cor,
+               combustivel, quilometragem, status, valor_diaria, data_aquisicao
+        FROM T_VEICULOS
+    """)
+
+    # nomes das colunas
+    nomes_colunas = []
+    for col in cur.description:
+        nomes_colunas.append(col[0].upper())
+    
+    resultados_db = cur.fetchall()
     cur.close()
 
-    if not todos_os_dados:
+    if not resultados_db:
+        return None
+
+    # converte cada linha em dicionário
+    lista_de_veiculos = []
+    for linha in resultados_db:
+        registro = {}
+        for i in range(len(nomes_colunas)):
+            registro[nomes_colunas[i]] = linha[i]
+        lista_de_veiculos.append(registro)
+
+    return lista_de_veiculos
+
+
+# formata uma lista de veículos em tabela (tabulate)
+def formatar_lista_veiculos_em_tabela(_lista_dados_veiculos: list) -> str:
+    if not _lista_dados_veiculos:
         print("Nenhum veículo encontrado.")
         return None
 
-    colunas = [
+    chaves_colunas_db = [
+        "ID_VEICULO", "TIPO", "MARCA", "MODELO", "ANO_FABRICACAO",
+        "PLACA", "COR", "COMBUSTIVEL", "QUILOMETRAGEM",
+        "STATUS", "VALOR_DIARIA", "DATA_AQUISICAO"
+    ]
+
+    headers_tabela = [
         "ID", "Tipo", "Marca", "Modelo", "Ano Fab.", "Placa", "Cor",
         "Combustível", "Km", "Status", "Valor Diária", "Data Aquisição"
     ]
 
-    tabela_completa = tabulate(
-        todos_os_dados,
-        headers=colunas,
+    # Cria a lista de listas para o tabulate, usando as chaves dos dicionários
+    dados_para_tabela = []
+    for veiculo in _lista_dados_veiculos:
+        linha_tabela = []
+        for chave in chaves_colunas_db:
+            valor = veiculo.get(chave, "")
+            linha_tabela.append(valor)
+        dados_para_tabela.append(linha_tabela)
+
+    tabela_formatada = tabulate(
+        dados_para_tabela,
+        headers=headers_tabela,
         tablefmt="fancy_grid",
         numalign="right",
         stralign="right"
     )
-    return tabela_completa
-
-
-def select_todos_veiculos(_conexao: oracledb.Connection) -> list:
-    df_veiculos = pd.read_sql("SELECT * FROM T_VEICULOS", _conexao)
-    
-    if df_veiculos.empty:
-        return None
-
-    return df_veiculos.to_dict(orient="records")
-
-
-    
+    return tabela_formatada
 
 # tenta atualizar os dados de um veículo no banco pelo ID e retorna True se deu certo, False se deu erro.
 def atualizar_dados_veiculo(_conexao: oracledb.Connection, _novos_dados: dict, _id_veiculo_alvo: int) -> bool:
@@ -380,9 +409,9 @@ def excluir_todos_veiculos(_conexao: oracledb.Connection) -> None:
 # ==================== PROGRAMA PRINCIPAL ====================
 
 try:
-    user = "rm561833"
-    password = "070406"
-    dsn = "oracle.fiap.com.br:1521/ORCL"
+    user = "rm561833" # retirar dps *
+    password = "070406" # retirar dps *
+    dsn = "oracle.fiap.com.br:1521/ORCL" # retirar dps *
     conn = conectar_oracledb(user, password, dsn)
     conectado = bool(conn)
 except Exception as e:
@@ -393,15 +422,10 @@ while conectado:
     exibir_titulo_centralizado("LOCADORA DE VEÍCULOS", 60)
     print("""
 1. Registrar novo veículo
-2. Consultar veículo
-3. Listar todos os veículos
-4. Atualizar informações
-5. Remover veículo
-6. Limpar todos os registros
-
-7. Exportar para JSON
-8. Exportar para CSV
-9. Exportar para Excel
+2. Consultar registros
+3. Atualizar informações
+4. Remover veículo
+5. Limpar todos os registros
 
 0. Sair
           """)
@@ -422,56 +446,95 @@ while conectado:
                 print("\nVeículo registrado com sucesso!")
             input("\nPrecione ENTER para continuar...")
 
+# ---------------------- AULA 21/10/2025
+
         case 2:
-            id_veiculo_consulta = -1
+            todos_veiculos = buscar_todos_veiculos_como_dicionario(conn)
 
-            while id_veiculo_consulta != 0:
+            if not todos_veiculos:
                 limpar_terminal()
-                exibir_titulo_centralizado("CONSULTA DE VEÍCULO", 60)
-                tabela_previa = buscar_resumo_veiculos(conn)
-                
-                if tabela_previa:
-                    print("\nESCOLHA O ID DO VEÍCULO QUE DESEJA CONSULTAR:\n")
-                    print(tabela_previa)
-                    print("\nDIGITE '0' PARA VOLTAR AO MENU PRINCIPAL\n")
-                    id_veiculo_consulta = obter_inteiro("\nDigite o ID do veículo: ")
-                else:
-                    id_veiculo_consulta = 0 
-                    continue
-                
-                if id_veiculo_consulta == 0:
-                    break
-
-                tabela_detalhes = buscar_detalhes_veiculo_por_id(conn, id_veiculo_consulta)
-                limpar_terminal()
-                exibir_titulo_centralizado("CONSULTA DE VEÍCULO", 60)
-
-                if tabela_detalhes:
-                    print(tabela_detalhes)
-                else:
-                    print("\nNenhum veículo encontrado com esse ID.\n")
-
+                exibir_titulo_centralizado("CONSULTA / LISTA DE VEÍCULOS", 60)
+                print("\nNenhum veículo encontrado.\n")
                 input("\nPrecione ENTER para continuar...")
-                
-            input("\nPrecione ENTER para continuar...")
+            else:
+                escolha_menu = -1
+                while escolha_menu != 0:
+                    limpar_terminal()
+                    exibir_titulo_centralizado("CONSULTA / LISTA DE VEÍCULOS", 60)
 
+                    print("""1. Listar todos os veículos
+2. Consultar veículo por ID
+3. Pesquisar por texto
+4. Pesquisar por número
 
+0. Voltar ao menu principal
+""")
 
+                    escolha_menu = obter_inteiro_em_intervalo("Escolha: ", 0, 4)
+
+                    if escolha_menu == 0:
+                        break
+
+                    match escolha_menu:
+                        case 1:
+                            limpar_terminal()
+                            exibir_titulo_centralizado("LISTA DE TODOS OS VEÍCULOS", 170)
+                            tabela_formatada = formatar_lista_veiculos_em_tabela(todos_veiculos)
+                            if tabela_formatada:
+                                print(tabela_formatada)
+                            else:
+                                print("\nNenhum veículo encontrado.\n")
+                            input("\nPrecione ENTER para continuar...")
+
+                        case 2:
+                            id_veiculo_consulta = -1
+                            while id_veiculo_consulta != 0:
+                                limpar_terminal()
+                                exibir_titulo_centralizado("CONSULTA DE VEÍCULO POR ID", 170)
+                                tabela_previa = buscar_resumo_veiculos(conn)
+
+                                if tabela_previa:
+                                    print("\nESCOLHA O ID DO VEÍCULO QUE DESEJA CONSULTAR:\n")
+                                    print(tabela_previa)
+                                    print("\nDIGITE '0' PARA VOLTAR AO MENU PRINCIPAL\n")
+                                    id_veiculo_consulta = obter_inteiro("\nDigite o ID do veículo: ")
+                                else:
+                                    id_veiculo_consulta = 0
+                                    continue
+
+                                if id_veiculo_consulta == 0:
+                                    break
+
+                                tabela_detalhes = buscar_detalhes_veiculo_por_id(conn, id_veiculo_consulta)
+                                limpar_terminal()
+                                exibir_titulo_centralizado("CONSULTA DE VEÍCULO POR ID", 170)
+
+                                if tabela_detalhes:
+                                    print(tabela_detalhes)
+                                else:
+                                    print("\nNenhum veículo encontrado com esse ID.\n")
+
+                                input("\nPrecione ENTER para continuar...")
+
+                        case 3:
+                            limpar_terminal()
+                            exibir_titulo_centralizado("CONSULTA DE VEÍCULO POR TEXTO", 170)
+                            print("\nEm manutenção\n")
+                            input("\nPrecione ENTER para continuar...")
+
+                        case 4:
+                            limpar_terminal()
+                            exibir_titulo_centralizado("CONSULTA DE VEÍCULO POR NÚMERO", 170)
+                            print("\nEm manutenção\n")
+                            input("\nPrecione ENTER para continuar...")
+
+# ---------------------- AULA 21/10/2025
         case 3:
-            limpar_terminal()
-            exibir_titulo_centralizado("LISTA DE TODOS OS VEÍCULOS", 60)
-            tabela_completa_dados = buscar_todos_veiculos_detalhados(conn)
-            if tabela_completa_dados:
-                print(tabela_completa_dados)
-
-            input("\nPrecione ENTER para continuar...")
-
-        case 4:
             id_veiculo_atualizar = -1
 
             while id_veiculo_atualizar != 0:
                 limpar_terminal()
-                exibir_titulo_centralizado("ATUALIZAR VEÍCULO", 60)
+                exibir_titulo_centralizado("ATUALIZAR VEÍCULO", 170)
                 tabela_previa = buscar_resumo_veiculos(conn)
                 
                 if tabela_previa:
@@ -488,7 +551,7 @@ while conectado:
 
                 tabela_detalhes = buscar_detalhes_veiculo_por_id(conn, id_veiculo_atualizar)
                 limpar_terminal()
-                exibir_titulo_centralizado("ATUALIZAR VEÍCULO", 60)
+                exibir_titulo_centralizado("ATUALIZAR VEÍCULO", 170)
 
                 if tabela_detalhes:
                     print("DADOS ATUAIS")
@@ -507,12 +570,12 @@ while conectado:
 
             input("\nPrecione ENTER para continuar...")
 
-        case 5:
+        case 4:
             id_veiculo_remover = -1
 
             while id_veiculo_remover != 0:
                 limpar_terminal()
-                exibir_titulo_centralizado("REMOVER VEÍCULO", 60)
+                exibir_titulo_centralizado("REMOVER VEÍCULO", 170)
                 tabela_previa = buscar_resumo_veiculos(conn)
                 
                 if tabela_previa:
@@ -529,7 +592,7 @@ while conectado:
 
                 tabela_detalhes = buscar_detalhes_veiculo_por_id(conn, id_veiculo_remover)
                 limpar_terminal()
-                exibir_titulo_centralizado("REMOVER VEÍCULO", 60)
+                exibir_titulo_centralizado("REMOVER VEÍCULO", 170)
 
                 if tabela_detalhes:
                     print("DADOS ATUAIS")
@@ -552,9 +615,9 @@ while conectado:
             input("\nPrecione ENTER para continuar...")
 
 
-        case 6:
+        case 5:
             limpar_terminal()
-            exibir_titulo_centralizado("REMOVER TODOS OS REGISTROS", 60)
+            exibir_titulo_centralizado("REMOVER TODOS OS REGISTROS", 170)
             tabela_previa = buscar_resumo_veiculos(conn)
             if tabela_previa:
                 print("\nREGISTSROS ATUAIS\n")
