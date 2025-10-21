@@ -6,14 +6,15 @@ import pandas as pd
 from datetime import datetime
 from tabulate import tabulate
 
-# ORIENTAÇÕES PARA QUE O CÓDIGO FUNCIONE:
-    # 1. Copie o comando SQL e execute no seu banco de dados.
-    # 2. Faça o download das bibliotecas necessárias para que o código funcione no seu terminal:
-        # pip install oracledb
-        # pip install pandas
-        # pip install tabulate
+# ==================== ORIENTAÇÕES PARA QUE O CÓDIGO FUNCIONE ====================
 
-# COMANDO SQL PARA ORACLE:
+# 1. Copie o comando SQL e execute no seu banco de dados.
+# 2. Faça o download das bibliotecas necessárias para que o código funcione no seu terminal:
+#    pip install oracledb
+#    pip install pandas
+#    pip install tabulate
+
+# ==================== COMANDO SQL PARA ORACLE ====================
 """
 CREATE TABLE T_VEICULOS (
     id_veiculo INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -31,120 +32,115 @@ CREATE TABLE T_VEICULOS (
 );
 """
 
-# -------------------- SUBALGORITMOS
+# ==================== SUBALGORITMOS ====================
 
+# ==================== APRESENTAÇÃO ====================
 
-# -------------------- APRESENTAÇÃO
-
-# Limpa o terinal.
-def limpa_tela() -> None:
+# limpa a tela do terminal dependendo do sistema.
+def limpar_terminal() -> None:
     os.system("cls" if os.name == "nt" else "clear")
 
-# Exibe um título centralizado entre duas linhas decorativas "=-".
-def titulo_centralizado(_texto: str, _qtd_caracteres: int) -> None:
-    print("=-" * (_qtd_caracteres // 2))
-    print(_texto.center(_qtd_caracteres))
-    print("=-" * (_qtd_caracteres // 2), "\n")
+# mostra um título centralizado com linhas decorativas em cima e embaixo.
+def exibir_titulo_centralizado(_texto: str, _largura_caracteres: int) -> None:
+    print("=-" * (_largura_caracteres // 2))
+    print(_texto.center(_largura_caracteres))
+    print("=-" * (_largura_caracteres // 2), "\n")
 
-# Imprime uma simbolo separador.
-def imprime_linha_separadora(simbolo: str, quantidade: int):
+# imprime uma linha repetindo o símbolo que passar.
+def imprimir_linha_separadora(simbolo: str, quantidade: int) -> None:
     print(f"{simbolo * quantidade}")
 
+# ==================== VALIDAÇÃO E ENTRADA DE DADOS ====================
 
-# -------------------- VALIDAÇÃO E ENTRADA DE DADOS
-
-# Solicita um texto, retornando-o e exibindo uma mensagem personalizada.
-def solicita_texto(_mensagem: str) -> str:
-    texto = None
-    while not texto:
-        texto = str(input(_mensagem)).strip()
-        if not texto:
+# pede um texto pro usuário até ele digitar algo que não seja vazio.
+def obter_texto(_mensagem: str) -> str:
+    texto_entrada = None
+    while not texto_entrada:
+        texto_entrada = str(input(_mensagem)).strip()
+        if not texto_entrada:
             print("\nErro! Digite novamente.\n")
-    return texto
+    return texto_entrada
 
-# Solicita um número inteiro, retornando-o e exibindo uma mensagem personalizada.
-def solicita_inteiro(_mensagem: str) -> int:
-    inteiro = None
-    while inteiro is None:
+# pede um número inteiro até o usuário digitar certo.
+def obter_inteiro(_mensagem: str) -> int:
+    numero_inteiro = None
+    while numero_inteiro is None:
         try:
-            inteiro = int(input(_mensagem).strip())
+            numero_inteiro = int(input(_mensagem).strip())
         except ValueError:
             print("\nErro! Digite um número válido.\n")
-    return inteiro
+    return numero_inteiro
 
-# Solicita um número float, retornando-o e exibindo uma mensagem personalizada.
-def solicita_float(_mensagem: str) -> float:
-    valor = None
-    while valor is None:
+# pede um número decimal até digitar certo.
+def obter_float(_mensagem: str) -> float:
+    valor_float = None
+    while valor_float is None:
         try:
-            valor = float(input(_mensagem).strip())
+            valor_float = float(input(_mensagem).strip())
         except ValueError:
             print("\nErro! Digite um número válido.\n")
-    return valor
+    return valor_float
 
-# Solicita uma data, retornando-a e exibindo uma mensagem personalizada.
-def solicita_data(_mensagem: str) -> str:
-    data = None
-    while data is None:
+# pede uma data no formato DD/MM/AAAA e só aceita se for válida.
+def obter_data(_mensagem: str) -> str:
+    data_valida = None
+    while data_valida is None:
         data_str = str(input(_mensagem)).strip()
         if not data_str:
             print("\nErro! Digite novamente.\n")
             continue
         try:
-            data = datetime.strptime(data_str, "%d/%m/%Y")
+            data_valida = datetime.strptime(data_str, "%d/%m/%Y")
         except ValueError:
             print("\nErro! Digite uma data válida no formato DD/MM/AAAA.\n")
-            data = None
-    return data.strftime("%d/%m/%Y")
+            data_valida = None
+    return data_valida.strftime("%d/%m/%Y")
 
-# Solicita 'S' ou 'N' e retorna True ou False e exibindo uma mensagem personalizada.
-def solicita_sim_nao(_mensagem: str) -> bool:
-    resp = ""
-    while resp not in ["S", "N"]:
-        resp = str(input(_mensagem)).strip().upper()
-        if resp in ["S", "N"]:
-            return resp[0] == "S"
+# pede S ou N e devolve True ou False.
+def obter_sim_ou_nao(_mensagem: str) -> bool:
+    resposta_sim_nao = ""
+    while resposta_sim_nao not in ["S", "N"]:
+        resposta_sim_nao = str(input(_mensagem)).strip().upper()
+        if resposta_sim_nao in ["S", "N"]:
+            return resposta_sim_nao[0] == "S"
         print("\nErro! Digite apenas S ou N.\n")
         continue
 
-# Solicita um número inteiro que deve estar dentro de um intervalo específico e exibindo uma mensagem personalizada.
-def solicita_inteiro_intervalo(_mensagem: str, _minimo: int, _maximo: int) -> int:
-    valido = False
-    while not valido:
-        entrada = solicita_inteiro(_mensagem)
-        if _minimo <= entrada <= _maximo:
-            valido = True
+# pede um inteiro só aceitando se estiver entre os limites que você passar.
+def obter_inteiro_em_intervalo(_mensagem: str, _minimo: int, _maximo: int) -> int:
+    entrada_valida = False
+    while not entrada_valida:
+        entrada_numero = obter_inteiro(_mensagem)
+        if _minimo <= entrada_numero <= _maximo:
+            entrada_valida = True
         else:
             print(f"\nErro! Digite um número entre {_minimo} e {_maximo}.\n")
-    return entrada
+    return entrada_numero
 
+# ==================== BANCO DE DADOS ====================
 
-# -------------------- BANCO DE DADOS 
-
-# Tenta criar uma conexão com o Oracle Database e retorna a conexão se bem-sucedida ou None se ocorrer algum erro.
-def conexao_oracledb(_user: str, _password: str, _dsn: str) -> oracledb.Connection:
+# tenta conectar ao banco Oracle e devolve a conexão ou None se der erro.
+def conectar_oracledb(_usuario: str, _senha: str, _dsn_conexao: str) -> oracledb.Connection:
     try:
-        conexao = oracledb.connect(
-            user=_user,
-            password=_password,
-            dsn=_dsn
+        conexao_bd = oracledb.connect(
+            user=_usuario,
+            password=_senha,
+            dsn=_dsn_conexao
         )
-        return conexao
+        return conexao_bd
     except Exception as e:
         print(f"Erro ao conectar com banco.\n\n{e}")
         return None
 
-# Solicita os dados do veículo ao usuário e retorna um dicionário com todas as informações.
-def solicita_dados_veiculos() -> dict:
-    # Todos os dados
-    tipo = solicita_texto("\nTipo do veículo: ")
-    marca = solicita_texto("\nMarca: ")
-    modelo = solicita_texto("\nModelo: ")
-    ano_fabricacao = solicita_inteiro("\nAno de fabricação: ")
-    placa = solicita_texto("\nPlaca ex(ABC1D23): ")
-    cor = solicita_texto("\nCor: ")
+# pede todos os dados do veículo pro usuário e devolve num dicionário.
+def solicitar_dados_cadastro_veiculo() -> dict:
+    tipo = obter_texto("\nTipo do veículo: ")
+    marca = obter_texto("\nMarca: ")
+    modelo = obter_texto("\nModelo: ")
+    ano_fabricacao = obter_inteiro("\nAno de fabricação: ")
+    placa = obter_texto("\nPlaca ex(ABC1D23): ")
+    cor = obter_texto("\nCor: ")
 
-    # Combustível
     mensagem_combustivel = """\nCombustível (escolha uma opção):
 1. Gasolina
 2. Etanol
@@ -159,13 +155,11 @@ Escolha: """
         4: "Diesel",
         5: "Elétrico"
     }
-    opcao_combustivel = solicita_inteiro_intervalo(mensagem_combustivel, 1, 5)
+    opcao_combustivel = obter_inteiro_em_intervalo(mensagem_combustivel, 1, 5)
     combustivel = tipos_combustivel[opcao_combustivel]
 
-    # Quilometragem
-    quilometragem = solicita_inteiro("\nQuilometragem: ")
+    quilometragem = obter_inteiro("\nQuilometragem: ")
 
-    # Status
     mensagem_status = """\nStatus (escolha uma opção):
 1. Disponível
 2. Alugado
@@ -176,15 +170,13 @@ Escolha: """
         2: "Alugado",
         3: "Manutenção"
     }
-    opcao_status = solicita_inteiro_intervalo(mensagem_status, 1, 3)
+    opcao_status = obter_inteiro_em_intervalo(mensagem_status, 1, 3)
     status = tipos_status[opcao_status]
 
-    # Outros dados
-    valor_diaria = solicita_float("\nValor da diária: ")
-    data_aquisicao = solicita_data("\nData de aquisição do veículo (DD/MM/YYYY): ")
+    valor_diaria = obter_float("\nValor da diária: ")
+    data_aquisicao = obter_data("\nData de aquisição do veículo (DD/MM/YYYY): ")
 
-    # Cria o dicionário final
-    dados = {
+    dados_veiculo = {
         "tipo": tipo,
         "marca": marca,
         "modelo": modelo,
@@ -198,11 +190,11 @@ Escolha: """
         "data_aquisicao": data_aquisicao
     }
 
-    return dados
+    return dados_veiculo
 
-# Insere um novo registro de veículo e retorna True se o cadastro for bem sucedido ou False em caso de erro.
-def cadastrar_veiculo(_conexao: oracledb.Connection, _dados: dict) -> bool:
-    try: 
+# tenta salvar os dados do veículo no banco e retorna True se deu certo, False se deu erro.
+def inserir_novo_veiculo(_conexao: oracledb.Connection, _dados_veiculo: dict) -> bool:
+    try:
         comando_sql = """
 INSERT INTO T_VEICULOS (
     tipo, marca, modelo, ano_fabricacao, placa, cor,
@@ -214,104 +206,107 @@ VALUES (
 )
 """
         cur = _conexao.cursor()
-        cur.execute(comando_sql, _dados)
+        cur.execute(comando_sql, _dados_veiculo)
         _conexao.commit()
         cur.close()
 
-        sucesso = True
+        sucesso_cadastro = True
 
     except Exception as e:
         print(f"\nErro no cadastro.\n\n{e}")
+        sucesso_cadastro = False
 
-        sucesso = False
-    
-    return sucesso
+    return sucesso_cadastro
 
-# Busca e exibe uma lista resumida de veículos cadastrados no banco de dados.
-def previa_dados_veiculo(_conexao: oracledb.Connection) -> str:
+# pega todos os veículos do banco e mostra uma tabela resumida com ID, modelo, placa e status.
+def buscar_resumo_veiculos(_conexao: oracledb.Connection) -> str:
     cur = _conexao.cursor()
     cur.execute("""SELECT id_veiculo, modelo, placa, status FROM T_VEICULOS""")
-    dados = cur.fetchall()
+    resultados = cur.fetchall()
     cur.close()
 
-
-    if not dados:
+    if not resultados:
         print("Nenhum veículo encontrado.")
         return None
-    
-    dados = sorted(dados, key=lambda x: x[0])
 
-    # Cabeçalhos das colunas
+    resultados_ordenados = sorted(resultados, key=lambda x: x[0])
     colunas = ["ID", "Modelo", "Placa", "Status"]
 
-    # Exibição formatada com tabulate
-    tabela = tabulate(
-    dados,
-    headers=colunas,
-    tablefmt="fancy_grid", # plain, grid, fancy_grid, github, psql, pipe, simple_outline
-    numalign="right", # left, center, right
-    stralign="right" # left, center, right
+    tabela_resumo = tabulate(
+        resultados_ordenados,
+        headers=colunas,
+        tablefmt="fancy_grid",
+        numalign="right",
+        stralign="right"
     )
-    return tabela
+    return tabela_resumo
 
-# Retorna os dados completos de um veículo específico pelo ID formatados em tabela.
-def dados_unicos(_conexao: oracledb.Connection, _id: int) -> str:
+# pega todos os detalhes de um veículo específico pelo ID e mostra em tabela.
+def buscar_detalhes_veiculo_por_id(_conexao: oracledb.Connection, _id_veiculo: int) -> str:
     cur = _conexao.cursor()
     comando_sql = """SELECT * FROM T_VEICULOS WHERE id_veiculo = :id_veiculo"""
-    cur.execute(comando_sql, {"id_veiculo": _id})
-    dados = cur.fetchall()
+    cur.execute(comando_sql, {"id_veiculo": _id_veiculo})
+    dados_detalhados = cur.fetchall()
     cur.close()
 
-    tabela = None
-
-    if not dados:
+    if not dados_detalhados:
         print("Nenhum veículo encontrado.")
-        return tabela
+        return None
 
     colunas = [
         "ID", "Tipo", "Marca", "Modelo", "Ano Fab.", "Placa", "Cor",
         "Combustível", "Km", "Status", "Valor Diária", "Data Aquisição"
     ]
 
-    tabela = tabulate(
-    dados,
-    headers=colunas,
-    tablefmt="fancy_grid", # plain, grid, fancy_grid, github, psql, pipe, simple_outline
-    numalign="right", # left, center, right
-    stralign="right" # left, center, right
+    tabela_detalhada = tabulate(
+        dados_detalhados,
+        headers=colunas,
+        tablefmt="fancy_grid",
+        numalign="right",
+        stralign="right"
     )
-    return tabela
+    return tabela_detalhada
 
-# Retorna todos os registros de veículos formatados em tabela.
-def dados_inteiros(_conexao: oracledb.Connection, ) -> str:
+# pega todos os veículos do banco com todos os detalhes e mostra em tabela completa.
+def buscar_todos_veiculos_detalhados(_conexao: oracledb.Connection) -> str:
     cur = _conexao.cursor()
     cur.execute("SELECT * FROM T_VEICULOS")
-    dados = cur.fetchall()
+    todos_os_dados = cur.fetchall()
     cur.close()
 
-    tabela = None
-
-    if not dados:
+    if not todos_os_dados:
         print("Nenhum veículo encontrado.")
-        return tabela
+        return None
 
     colunas = [
         "ID", "Tipo", "Marca", "Modelo", "Ano Fab.", "Placa", "Cor",
         "Combustível", "Km", "Status", "Valor Diária", "Data Aquisição"
     ]
 
-    tabela = tabulate(
-    dados,
-    headers=colunas,
-    tablefmt="fancy_grid", # plain, grid, fancy_grid, github, psql, pipe, simple_outline
-    numalign="right", # left, center, right
-    stralign="right" # left, center, right
+    tabela_completa = tabulate(
+        todos_os_dados,
+        headers=colunas,
+        tablefmt="fancy_grid",
+        numalign="right",
+        stralign="right"
     )
-    return tabela
+    return tabela_completa
 
-# 
-def alterar_dados(_conexao: oracledb.Connection, _dados: dict, _id_veiculo: int) -> bool:
-    try: 
+
+def select_todos_veiculos(_conexao: oracledb.Connection) -> list:
+    df_veiculos = pd.read_sql("SELECT * FROM T_VEICULOS", _conexao)
+    
+    if df_veiculos.empty:
+        return None
+
+    return df_veiculos.to_dict(orient="records")
+
+
+    
+
+# tenta atualizar os dados de um veículo no banco pelo ID e retorna True se deu certo, False se deu erro.
+def atualizar_dados_veiculo(_conexao: oracledb.Connection, _novos_dados: dict, _id_veiculo_alvo: int) -> bool:
+    try:
         comando_sql = """
         UPDATE T_VEICULOS
         SET tipo = :tipo,
@@ -328,35 +323,74 @@ def alterar_dados(_conexao: oracledb.Connection, _dados: dict, _id_veiculo: int)
         WHERE id_veiculo = :id_veiculo
         """
 
-        dados_bind = _dados.copy()
-        dados_bind["id_veiculo"] = _id_veiculo
+        dados_para_bind = _novos_dados.copy()
+        dados_para_bind["id_veiculo"] = _id_veiculo_alvo
 
         cur = _conexao.cursor()
-        cur.execute(comando_sql, dados_bind)
+        cur.execute(comando_sql, dados_para_bind)
         _conexao.commit()
         cur.close()
 
-        sucesso = True
+        sucesso_atualizacao = True
 
     except Exception as e:
         print(f"\nErro no cadastro.\n\n{e}")
-        sucesso = False
-    
-    return sucesso
+        sucesso_atualizacao = False
 
-# -------------------- PROGRAMA PRINCIPAL
+    return sucesso_atualizacao
+
+# tenta excluir um veículo da tabela do banco de dados pelo id e retorna True se deu certo, False se deu erro.
+def excluir_veiculo_por_id(_conexao: oracledb.Connection, _id_veiculo: int) -> bool:
+    try:
+        comando_sql = f"""DELETE FROM T_VEICULOS  WHERE id_veiculo = :id_veiculo"""
+        cur = _conexao.cursor()
+        cur.execute(comando_sql, {"id_veiculo": _id_veiculo})
+        _conexao.commit()
+        cur.close()
+
+        sucesso_remocao = True
+
+    except Exception as e:
+        print(f"\nErro na remoção.\n\n{e}")
+        sucesso_remocao = False
+
+    return sucesso_remocao
+
+def excluir_todos_veiculos(_conexao: oracledb.Connection) -> None:
+    try:
+        comando_sql = f"""DELETE FROM T_VEICULOS"""
+        cur = _conexao.cursor()
+        cur.execute(comando_sql)
+        _conexao.commit()
+        cur.close()
+        
+        sucesso_exclusao = True
+
+    except Exception as e:
+        print(f"\nErro na operação.\n\n{e}")
+        sucesso_exclusao = False
+
+    return sucesso_exclusao       
+
+
+# ==================== GERENCIAMENTO JSON ====================
+
+
+
+# ==================== PROGRAMA PRINCIPAL ====================
+
 try:
     user = "rm561833"
     password = "070406"
     dsn = "oracle.fiap.com.br:1521/ORCL"
-    conn = conexao_oracledb(user, password, dsn)
+    conn = conectar_oracledb(user, password, dsn)
     conectado = bool(conn)
 except Exception as e:
     conectado = False
 
 while conectado:
-    limpa_tela()
-    titulo_centralizado("LOCADORA DE VEÍCULOS",60)
+    limpar_terminal()
+    exibir_titulo_centralizado("LOCADORA DE VEÍCULOS", 60)
     print("""
 1. Registrar novo veículo
 2. Consultar veículo
@@ -371,118 +405,183 @@ while conectado:
 
 0. Sair
           """)
-    escolha = solicita_inteiro_intervalo("Escolha: ", 0, 9)
-    
-    match escolha:
+    escolha_menu = obter_inteiro_em_intervalo("Escolha: ", 0, 9)
+
+    match escolha_menu:
         case 0:
-            limpa_tela()
+            limpar_terminal()
             print("\nPrograma encerrado. Até logo!\n")
             conectado = False
+
         case 1:
-            limpa_tela()
-            titulo_centralizado("FICHA DE CADASTRO DE VEÍCULO LOCADORA", 60)
-            dados_registros = solicita_dados_veiculos()
-            sucesso = cadastrar_veiculo(conn, dados_registros)
+            limpar_terminal()
+            exibir_titulo_centralizado("FICHA DE CADASTRO", 60)
+            dados_do_registro = solicitar_dados_cadastro_veiculo()
+            sucesso = inserir_novo_veiculo(conn, dados_do_registro)
             if sucesso:
                 print("\nVeículo registrado com sucesso!")
-                input("\nPrecione ENTER para continuar...")
-            else:
-                input("\nPrecione ENTER para continuar...")
+            input("\nPrecione ENTER para continuar...")
+
         case 2:
-            id_veiculo = -1  # inicializa com valor diferente de 0
+            id_veiculo_consulta = -1
 
-            while id_veiculo != 0:
-                limpa_tela()
-                titulo_centralizado("CONSULTA DE VEÍCULO LOCADORA", 60)
-
-                print("\nESCOLHA O ID DO VEÍCULO QUE DESEJA CONSULTAR:\n")
-
-                previa_dados = previa_dados_veiculo(conn)
-
-                if previa_dados:
-                    print(previa_dados)
-                print("\nDIGITE '0' PARA VOLTAR AO MENU PRINCIPAL\n")
-                id_veiculo = solicita_inteiro("\nDigite o ID do veículo: ")
+            while id_veiculo_consulta != 0:
+                limpar_terminal()
+                exibir_titulo_centralizado("CONSULTA DE VEÍCULO", 60)
+                tabela_previa = buscar_resumo_veiculos(conn)
                 
-                if id_veiculo == 0:
+                if tabela_previa:
+                    print("\nESCOLHA O ID DO VEÍCULO QUE DESEJA CONSULTAR:\n")
+                    print(tabela_previa)
+                    print("\nDIGITE '0' PARA VOLTAR AO MENU PRINCIPAL\n")
+                    id_veiculo_consulta = obter_inteiro("\nDigite o ID do veículo: ")
+                else:
+                    id_veiculo_consulta = 0 
                     continue
                 
-                todos_dados = dados_unicos(conn, id_veiculo)
+                if id_veiculo_consulta == 0:
+                    break
 
-                limpa_tela()
-                titulo_centralizado("CONSULTA DE VEÍCULO LOCADORA", 60)
+                tabela_detalhes = buscar_detalhes_veiculo_por_id(conn, id_veiculo_consulta)
+                limpar_terminal()
+                exibir_titulo_centralizado("CONSULTA DE VEÍCULO", 60)
 
-                if todos_dados:
-                    print(todos_dados)
+                if tabela_detalhes:
+                    print(tabela_detalhes)
                 else:
                     print("\nNenhum veículo encontrado com esse ID.\n")
-                
+
                 input("\nPrecione ENTER para continuar...")
+                
+            input("\nPrecione ENTER para continuar...")
+
+
 
         case 3:
-            limpa_tela()
-            titulo_centralizado("LISTA DE TODOS OS VEÍCULOS", 60)
-            dados = dados_inteiros(conn)
-            print(dados)
+            limpar_terminal()
+            exibir_titulo_centralizado("LISTA DE TODOS OS VEÍCULOS", 60)
+            tabela_completa_dados = buscar_todos_veiculos_detalhados(conn)
+            if tabela_completa_dados:
+                print(tabela_completa_dados)
+
             input("\nPrecione ENTER para continuar...")
+
         case 4:
-            id_veiculo = -1  # inicializa com valor diferente de 0
+            id_veiculo_atualizar = -1
 
-            while id_veiculo != 0:
-                limpa_tela()
-                titulo_centralizado("ATUALIZAR VEÍCULO LOCADORA", 60)
-
-                print("\nESCOLHA O ID DO VEÍCULO QUE DESEJA CONSULTAR:\n")
-
-                previa_dados = previa_dados_veiculo(conn)
-
-                if previa_dados:
-                    print(previa_dados)
-                print("\nDIGITE '0' PARA VOLTAR AO MENU PRINCIPAL\n")
-                id_veiculo = solicita_inteiro("\nDigite o ID do veículo: ")
+            while id_veiculo_atualizar != 0:
+                limpar_terminal()
+                exibir_titulo_centralizado("ATUALIZAR VEÍCULO", 60)
+                tabela_previa = buscar_resumo_veiculos(conn)
                 
-                if id_veiculo == 0:
+                if tabela_previa:
+                    print("\nESCOLHA O ID DO VEÍCULO QUE DESEJA ATUALIZAR:\n")
+                    print(tabela_previa)
+                    print("\nDIGITE '0' PARA VOLTAR AO MENU PRINCIPAL\n")
+                    id_veiculo_atualizar = obter_inteiro("\nDigite o ID do veículo: ")
+                else:
+                    id_veiculo_atualizar = 0
                     continue
-                
-                todos_dados = dados_unicos(conn, id_veiculo)
 
-                limpa_tela()
-                titulo_centralizado("ATUALIZAÇÃO DE VEÍCULO LOCADORA", 60)
+                if id_veiculo_atualizar == 0:
+                    break
 
-                if todos_dados:
+                tabela_detalhes = buscar_detalhes_veiculo_por_id(conn, id_veiculo_atualizar)
+                limpar_terminal()
+                exibir_titulo_centralizado("ATUALIZAR VEÍCULO", 60)
+
+                if tabela_detalhes:
                     print("DADOS ATUAIS")
-                    print(todos_dados)
+                    print(tabela_detalhes)
                     print("\nDigite os novos dados do veículo:\n")
-                    
-                    # ✅ Aqui coleta os novos dados e passa o dicionário correto para a função
-                    novos_dados = solicita_dados_veiculos()
-                    alterar_dados(conn, novos_dados, id_veiculo)
-
+                    novos_dados = solicitar_dados_cadastro_veiculo()
+                    sucesso_atualizacao = atualizar_dados_veiculo(conn, novos_dados, id_veiculo_atualizar)
+                    if sucesso_atualizacao:
+                        print("\nVeículo atualizado com sucesso!")
+                    else:
+                        print("\nErro ao atualizar o veículo.\n")
                 else:
                     print("\nNenhum veículo encontrado com esse ID.\n")
-                
-                input("\nPressione ENTER para continuar...")
 
+                input("\nPrecione ENTER para continuar...")
 
-
+            input("\nPrecione ENTER para continuar...")
 
         case 5:
-            limpa_tela()
-            print("\nEm manutenção\n")
+            id_veiculo_remover = -1
+
+            while id_veiculo_remover != 0:
+                limpar_terminal()
+                exibir_titulo_centralizado("REMOVER VEÍCULO", 60)
+                tabela_previa = buscar_resumo_veiculos(conn)
+                
+                if tabela_previa:
+                    print("\nESCOLHA O ID DO VEÍCULO QUE DESEJA REMOVER:\n")
+                    print(tabela_previa)
+                    print("\nDIGITE '0' PARA VOLTAR AO MENU PRINCIPAL\n")
+                    id_veiculo_remover = obter_inteiro("\nDigite o ID do veículo: ")
+                else:
+                    id_veiculo_remover = 0
+                    continue
+
+                if id_veiculo_remover == 0:
+                    break
+
+                tabela_detalhes = buscar_detalhes_veiculo_por_id(conn, id_veiculo_remover)
+                limpar_terminal()
+                exibir_titulo_centralizado("REMOVER VEÍCULO", 60)
+
+                if tabela_detalhes:
+                    print("DADOS ATUAIS")
+                    print(tabela_detalhes)
+                    escolha = obter_sim_ou_nao("\nDESEJA EXCLUIR ESSE REGISTRO? (S/N): ")
+
+                    if escolha:
+                        sucesso = excluir_veiculo_por_id(conn, id_veiculo_remover)
+                        if sucesso:
+                            print("\nVeículo removido com sucesso!")
+                        else:
+                            print("\nErro ao remover o veículo.\n")
+                    else:
+                        print("\nRemoção cancelada pelo usuário.\n")
+                else:
+                    print("\nNenhum veículo encontrado com esse ID.\n")
+
+                input("\nPrecione ENTER para continuar...")
+
             input("\nPrecione ENTER para continuar...")
+
+
         case 6:
-            limpa_tela()
-            print("\nEm manutenção\n")
+            limpar_terminal()
+            exibir_titulo_centralizado("REMOVER TODOS OS REGISTROS", 60)
+            tabela_previa = buscar_resumo_veiculos(conn)
+            if tabela_previa:
+                print("\nREGISTSROS ATUAIS\n")
+                print(tabela_previa)
+
+                confirmacao = obter_sim_ou_nao("\nCONFIRMA A EXCLUSÃO DE TODOS OS VEÍCULOS? [S]im ou [N]ÃO? ")
+                if confirmacao:
+                    sucesso = excluir_todos_veiculos(conn)
+                    if sucesso:
+                        print("\nTODOS OS REGISTROS FORAM REMOVIDOS\n")
+                else:
+                    print("\nOperação cancelada...")
+
+
             input("\nPrecione ENTER para continuar...")
+
         case 7:
-            limpa_tela()
+            limpar_terminal()
             print("\nEm manutenção\n")
             input("\nPrecione ENTER para continuar...")
+
         case 8:
-            limpa_tela()
+            limpar_terminal()
             print("\nEm manutenção\n")
             input("\nPrecione ENTER para continuar...")
+
         case 9:
-            limpa_tela()
+            limpar_terminal()
             print("\nEm manutenção\n")
             input("\nPrecione ENTER para continuar...")
