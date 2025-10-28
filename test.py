@@ -1,6 +1,7 @@
 # Victor Alves Lopes RM561833
 
 import os
+import json
 import oracledb
 import pandas as pd
 from datetime import datetime
@@ -401,10 +402,150 @@ def excluir_todos_veiculos(_conexao: oracledb.Connection) -> None:
 
     return sucesso_exclusao       
 
+def buscar_veiculo_por_str(_conexao: oracledb.Connection, _campo: str, _msg: str) -> str:
+    campos_validos = ["TIPO", "MARCA", "MODELO", "PLACA", "COR", "COMBUSTIVEL", "STATUS"]
+    if _campo.upper() not in campos_validos:
+        print("\nErro: campo inválido para busca textual.\n")
+        return None
 
-# ==================== GERENCIAMENTO JSON ====================
+    cur = _conexao.cursor()
+    texto = obter_texto(_msg)
+    comando_sql = f"SELECT * FROM T_VEICULOS WHERE {_campo.upper()} LIKE :texto"
+    
+    try:
+        cur.execute(comando_sql, {"texto": f"%{texto}%"} )
+        dados_detalhados = cur.fetchall()
+    except Exception as e:
+        print(f"\nErro ao executar consulta SQL: {e}\n")
+        cur.close()
+        return None
+
+    cur.close()
+
+    if not dados_detalhados:
+        print("Nenhum veículo encontrado.")
+        return None
+
+    colunas = [
+        "ID", "Tipo", "Marca", "Modelo", "Ano Fab.", "Placa", "Cor",
+        "Combustível", "Km", "Status", "Valor Diária", "Data Aquisição"
+    ]
+
+    tabela_detalhada = tabulate(
+        dados_detalhados,
+        headers=colunas,
+        tablefmt="fancy_grid",
+        numalign="right",
+        stralign="right"
+    )
+    return tabela_detalhada
 
 
+def buscar_veiculo_por_int(_conexao: oracledb.Connection, _campo: str, _opcao_operador: int, _msg: str) -> str:
+    cur = _conexao.cursor()
+
+    operadores = {
+        1: "=",
+        2: ">",
+        3: "<",
+        4: ">=",
+        5: "<=",
+        6: "!="
+    }
+
+    if _opcao_operador not in operadores:
+        print("\nErro: opção de operador inválida.\n")
+        return None
+
+    op_relacional = operadores[_opcao_operador]
+    num = obter_inteiro(_msg)
+
+    comando_sql = f"SELECT * FROM T_VEICULOS WHERE {_campo} {op_relacional} :num"
+
+    try:
+        cur.execute(comando_sql, {"num": num})
+        dados_detalhados = cur.fetchall()
+    except Exception as e:
+        print(f"\nErro ao executar consulta SQL: {e}\n")
+        cur.close()
+        return None
+
+    cur.close()
+
+    if not dados_detalhados:
+        print("Nenhum veículo encontrado.")
+        return None
+
+    colunas = [
+        "ID", "Tipo", "Marca", "Modelo", "Ano Fab.", "Placa", "Cor",
+        "Combustível", "Km", "Status", "Valor Diária", "Data Aquisição"
+    ]
+
+    tabela_detalhada = tabulate(
+        dados_detalhados,
+        headers=colunas,
+        tablefmt="fancy_grid",
+        numalign="right",
+        stralign="right"
+    )
+    return tabela_detalhada
+
+
+# ==================== EXPORTAÇÃO ====================
+
+# exporta a lista de veículos para Excel
+def exportar_para_excel(_conexao: oracledb.Connection, _nome_arquivo: str = "veiculos.xlsx") -> bool:
+    try:
+        lista_veiculos = buscar_todos_veiculos_como_dicionario(_conexao)
+        if not lista_veiculos:
+            print("Nenhum veículo para exportar.")
+            return False
+
+        df = pd.DataFrame(lista_veiculos)
+        df.to_excel(_nome_arquivo, index=False)
+        return True
+    except Exception as e:
+        print(f"\nErro ao exportar para Excel: {e}")
+        return False
+
+# exporta a lista de veículos para CSV
+def exportar_para_csv(_conexao: oracledb.Connection, _nome_arquivo: str = "veiculos.csv") -> bool:
+    try:
+        lista_veiculos = buscar_todos_veiculos_como_dicionario(_conexao)
+        if not lista_veiculos:
+            print("Nenhum veículo para exportar.")
+            return False
+
+        df = pd.DataFrame(lista_veiculos)
+        df.to_csv(_nome_arquivo, index=False, sep=';')
+        return True
+    except Exception as e:
+        print(f"\nErro ao exportar para CSV: {e}")
+        return False
+
+
+def exportar_para_json(_conexao: oracledb.Connection, _nome_arquivo: str = "veiculos.json") -> bool:
+    try:
+        lista_veiculos = buscar_todos_veiculos_como_dicionario(_conexao)
+        if not lista_veiculos:
+            print("Nenhum veículo para exportar.")
+            return False
+
+        # Converter datas pra string
+        for veiculo in lista_veiculos:
+            for chave, valor in veiculo.items():
+                if isinstance(valor, datetime):
+                    veiculo[chave] = valor.strftime("%d/%m/%Y")
+
+
+        with open(_nome_arquivo, "w", encoding="utf-8") as arquivo_json:
+            json.dump(lista_veiculos, arquivo_json, ensure_ascii=False, indent=4)
+
+        print(f"\nArquivo JSON '{_nome_arquivo}' gerado com sucesso!")
+        return True
+    except Exception as e:
+        print(f"\nErro ao exportar para JSON: {e}")
+        return False
 
 # ==================== PROGRAMA PRINCIPAL ====================
 
@@ -426,6 +567,7 @@ while conectado:
 3. Atualizar informações
 4. Remover veículo
 5. Limpar todos os registros
+6. Exportações 
 
 0. Sair
           """)
@@ -445,9 +587,6 @@ while conectado:
             if sucesso:
                 print("\nVeículo registrado com sucesso!")
             input("\nPrecione ENTER para continuar...")
-
-# ---------------------- AULA 21/10/2025
-
         case 2:
             todos_veiculos = buscar_todos_veiculos_como_dicionario(conn)
 
@@ -519,16 +658,102 @@ while conectado:
                         case 3:
                             limpar_terminal()
                             exibir_titulo_centralizado("CONSULTA DE VEÍCULO POR TEXTO", 170)
-                            print("\nEm manutenção\n")
+
+                            mensagem_campo_texto = """
+Escolha o campo textual para buscar:
+1. TIPO
+2. MARCA
+3. MODELO
+4. PLACA
+5. COR
+6. COMBUSTIVEL
+7. STATUS
+"""
+                            print(mensagem_campo_texto)
+                            campo_escolhido = obter_inteiro_em_intervalo("Campo: ", 1, 7)
+
+                            campos_textuais = {
+                                1: "TIPO",
+                                2: "MARCA",
+                                3: "MODELO",
+                                4: "PLACA",
+                                5: "COR",
+                                6: "COMBUSTIVEL",
+                                7: "STATUS"
+                            }
+                            campo = campos_textuais[campo_escolhido]
+
+                            try:
+                                tabela_detalhes = buscar_veiculo_por_str(conn, campo, "\nDigite o texto para buscar: ")
+                                limpar_terminal()
+                                exibir_titulo_centralizado("RESULTADO DA BUSCA", 170)
+
+                                if tabela_detalhes:
+                                    print(tabela_detalhes)
+                                else:
+                                    print("\nNenhum veículo encontrado com esse parametro.\n")
+
+                            except Exception as e:
+                                print(f"\nErro ao realizar a busca: {e}\n")
+
                             input("\nPrecione ENTER para continuar...")
+
 
                         case 4:
                             limpar_terminal()
                             exibir_titulo_centralizado("CONSULTA DE VEÍCULO POR NÚMERO", 170)
-                            print("\nEm manutenção\n")
+
+                            mensagem_campo = """
+Escolha o campo numérico para buscar:
+1. ID_VEICULO
+2. ANO_FABRICACAO
+3. QUILOMETRAGEM
+4. VALOR_DIARIA
+"""
+                            print(mensagem_campo)
+                            campo_escolhido = obter_inteiro_em_intervalo("Campo: ", 1, 4)
+
+                            campos_numericos = {
+                                1: "ID_VEICULO",
+                                2: "ANO_FABRICACAO",
+                                3: "QUILOMETRAGEM",
+                                4: "VALOR_DIARIA"
+                            }
+                            campo = campos_numericos[campo_escolhido]
+
+                            mensagem_operador = """
+Escolha o operador:
+1. Igual (=)
+2. Maior (>)
+3. Menor (<)
+4. Maior ou igual (>=)
+5. Menor ou igual (<=)
+6. Diferente (!=)
+"""
+                            print(mensagem_operador)
+                            opcao_operador = obter_inteiro_em_intervalo("Operador: ", 1, 6)
+
+                            try:
+                                tabela_detalhes = buscar_veiculo_por_int(
+                                    conn,
+                                    campo,
+                                    opcao_operador,
+                                    "\nDigite o valor numérico: "
+                                )
+                                limpar_terminal()
+                                exibir_titulo_centralizado("RESULTADO DA BUSCA", 170)
+
+                                if tabela_detalhes:
+                                    print(tabela_detalhes)
+                                else:
+                                    print("\nNenhum veículo encontrado com esse critério.\n")
+
+                            except Exception as e:
+                                print(f"\nErro ao realizar a busca: {e}\n")
+
                             input("\nPrecione ENTER para continuar...")
 
-# ---------------------- AULA 21/10/2025
+
         case 3:
             id_veiculo_atualizar = -1
 
@@ -634,17 +859,53 @@ while conectado:
 
             input("\nPrecione ENTER para continuar...")
 
-        case 7:
-            limpar_terminal()
-            print("\nEm manutenção\n")
-            input("\nPrecione ENTER para continuar...")
+        case 6:
+            escolha_export = -1
+            while escolha_export != 0:
+                limpar_terminal()
+                exibir_titulo_centralizado("EXPORTAÇÃO DE DADOS", 170)
+                print("""
+1. Gerar arquivo EXCEL
+2. Gerar arquivo CSV
+3. Gerar arquivo JSON
 
-        case 8:
-            limpar_terminal()
-            print("\nEm manutenção\n")
-            input("\nPrecione ENTER para continuar...")
+0. Voltar para menu principal
+""")
+                escolha_export = obter_inteiro_em_intervalo("Escolha: ", 0, 3)
 
-        case 9:
-            limpar_terminal()
-            print("\nEm manutenção\n")
-            input("\nPrecione ENTER para continuar...")
+                match escolha_export:
+                    case 0:
+                        break
+
+                    case 1:
+                        limpar_terminal()
+                        exibir_titulo_centralizado("EXPORTAÇÃO PARA EXCEL", 170)
+                        nome_arquivo = obter_texto("\nDigite o nome do arquivo (sem extensão): ")
+                        sucesso = exportar_para_excel(conn, nome_arquivo + ".xlsx")
+                        if sucesso:
+                            print(f"\nArquivo '{nome_arquivo}.xlsx' gerado com sucesso!\n")
+                        else:
+                            print("\nFalha ao gerar arquivo Excel.\n")
+                        input("\nPressione ENTER para continuar...")
+
+                    case 2:
+                        limpar_terminal()
+                        exibir_titulo_centralizado("EXPORTAÇÃO PARA CSV", 170)
+                        nome_arquivo = obter_texto("\nDigite o nome do arquivo (sem extensão): ")
+                        sucesso = exportar_para_csv(conn, nome_arquivo + ".csv")
+                        if sucesso:
+                            print(f"\nArquivo '{nome_arquivo}.csv' gerado com sucesso!\n")
+                        else:
+                            print("\nFalha ao gerar arquivo CSV.\n")
+                        input("\nPressione ENTER para continuar...")
+                    case 3:
+                        limpar_terminal()
+                        exibir_titulo_centralizado("EXPORTAÇÃO PARA JSON", 170)
+                        nome_arquivo = obter_texto("\nDigite o nome do arquivo (sem extensão): ")
+                        sucesso = exportar_para_json(conn, nome_arquivo + ".json")
+                        if sucesso:
+                            print(f"\nArquivo '{nome_arquivo}.json' gerado com sucesso!\n")
+                        else:
+                            print("\nFalha ao gerar arquivo JSON.\n")
+                        input("\nPressione ENTER para continuar...")
+
