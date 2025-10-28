@@ -1,0 +1,23 @@
+ID_VEICULO;TIPO;MARCA;MODELO;ANO_FABRICACAO;PLACA;COR;COMBUSTIVEL;QUILOMETRAGEM;STATUS;VALOR_DIARIA;DATA_AQUISICAO
+22;Moto;Kawasaki;Ninja ZX-10R;2023;ABC1D23;Verde;Gasolina;3200;Disponível;480.0;2023-07-14
+23;Moto;Ducati;Panigale V4S;2022;DEF4G56;Vermelha;Gasolina;2100;Disponível;550.0;2023-02-21
+24;Moto;BMW;S1000RR;2023;GHI7J89;Branca;Gasolina;1800;Manutenção;600.0;2023-05-11
+25;Moto;Yamaha;R1M;2021;JKL0M12;Azul;Gasolina;5200;Disponível;420.0;2022-11-09
+26;Moto;Honda;CBR1000RR-R Fireblade;2024;NOP3Q45;Vermelha;Gasolina;900;Disponível;510.0;2024-03-20
+27;Moto;Harley-Davidson;Fat Boy 114;2022;RST6U78;Preta;Gasolina;4700;Alugada;450.0;2023-04-18
+28;Carro;Ferrari;F8 Tributo;2022;UVW9X12;Vermelha;Gasolina;11000;Disponível;2500.0;2023-01-15
+29;Carro;Lamborghini;Huracán EVO;2023;XYZ3A45;Amarela;Gasolina;6000;Alugada;2700.0;2023-09-07
+30;Carro;Porsche;911 Turbo S;2021;BCD6E78;Prata;Gasolina;9000;Disponível;2100.0;2022-12-03
+31;Carro;BMW;M4 Competition;2023;EFG9H01;Branca;Gasolina;4500;Disponível;1300.0;2023-08-10
+32;Carro;Mercedes-Benz;AMG GT R;2022;HIJ2K34;Preta;Gasolina;7300;Disponível;1600.0;2023-03-12
+33;Carro;Audi;R8 V10 Performance;2023;KLM5N67;Cinza;Gasolina;5100;Alugada;1900.0;2023-10-02
+34;Carro;McLaren;720S;2021;NOP8Q90;Laranja;Gasolina;8800;Disponível;2300.0;2022-09-21
+35;Carro;Aston Martin;DB11;2022;QRS1T23;Verde;Gasolina;6900;Disponível;1800.0;2023-06-15
+36;Carro;Tesla;Model S Plaid;2023;TUV4W56;Branco;Elétrico;4100;Disponível;1400.0;2023-11-01
+37;Carro;Chevrolet;Corvette C8;2022;WXY7Z89;Vermelha;Gasolina;7200;Alugada;1500.0;2023-05-19
+38;Caminhão;Mercedes-Benz;Actros 2651;2021;AAA1B11;Branco;Diesel;48000;Disponível;850.0;2022-07-23
+39;Caminhão;Volvo;FH 540;2022;BBB2C22;Cinza;Diesel;37500;Disponível;900.0;2023-02-04
+40;Caminhão;Scania;R 500;2023;CCC3D33;Azul;Diesel;22000;Disponível;950.0;2023-09-11
+41;Caminhão;MAN;TGX 28.440;2021;DDD4E44;Prata;Diesel;55000;Manutenção;820.0;2022-10-06
+42;Caminhão;DAF;XF 530;2022;EEE5F55;Preto;Diesel;39000;Disponível;880.0;2023-03-30
+43;Caminhão;Iveco;Hi-Way 490S;2021;FFF6G66;Branco;Diesel;60000;Disponível;800.0;2022-08-19
