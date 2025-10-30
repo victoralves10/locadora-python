@@ -551,9 +551,9 @@ def exportar_para_json(_conexao: oracledb.Connection, _nome_arquivo: str = "veic
 # ==================== PROGRAMA PRINCIPAL ====================
 
 try:
-    user = "rm561833" # retirar dps *
-    password =                                                                                                                                                                                                                                             "070406" # retirar dps *
-    dsn = "oracle.fiap.com.br:1521/ORCL" # retirar dps *
+    user = "rm561833"
+    password = "070406"
+    dsn = "oracle.fiap.com.br:1521/ORCL"
     conn = conectar_oracledb(user, password, dsn)
     conectado = bool(conn)
 except Exception as e:
@@ -618,7 +618,7 @@ while conectado:
                         case 1:
                             limpar_terminal()
                             exibir_titulo_centralizado("LISTA DE TODOS OS VEÍCULOS", 170)
-                            tabela_formatada = formatar_lista_veiculos_em_tabela(todos_veiculos)
+                            tabela_formatada = formatar_lista_veiculos_em_tabela(todos_veiculos, campo)
                             if tabela_formatada:
                                 print(tabela_formatada)
                             else:
@@ -752,7 +752,6 @@ Escolha o operador:
                                 print(f"\nErro ao realizar a busca: {e}\n")
 
                             input("\nPrecione ENTER para continuar...")
-
 
         case 3:
             id_veiculo_atualizar = -1
@@ -906,3 +905,58 @@ Escolha o operador:
                         else:
                             print("\nFalha ao gerar arquivo JSON.\n")
                         input("\nPressione ENTER para continuar...")
+
+
+
+# Lógica Versão 6 - Só add no codigo - 30/10
+''' 
+def solicita_campos():
+    campos_escolhidos = {
+        1: "id_veiculo",
+        2: "tipo",
+        3: "marca",
+        4: "modelo",
+        5: "ano_fabricacao",
+        6: "placa",
+        7: "cor",
+        8: "combustivel",
+        9: "quilometragem",
+        10: "status",
+        11: "valor_diaria",
+        12: "data_aquisicao"
+    }
+
+    print(""""Escolha os campo
+    1. Id do veículo
+    2. Tipo
+    3. Marca
+    4. Modelo
+    5. Ano de fabricação
+    6. Placa
+    7. Cor
+    8. Combustível
+    9. Quilometragem
+    10. Status
+    11. Valor da diária
+    12. Data de aquisição do veículo""")
+
+    campos = []
+    escolha = True
+    while escolha:  
+        escolha = int(input("\nESCOLHA (0 para sair): "))
+
+        if escolha == 0:
+            escolha = False
+            continue
+
+        if escolha in campos_escolhidos:
+            campos.append(campos_escolhidos[escolha])
+
+    campos = ', '.join(campos)
+
+    return campos
+
+campos = solicita_campos()
+
+print(f"\nCampos selecionados:\n{campos}")
+'''
